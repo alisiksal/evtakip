@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#176b57">
+<link rel="manifest" href="manifest.json">
+<title>EvTakip</title>
+<style>
+:root{--green:#176b57;--bg:#f4f7f6;--ink:#18332c;--muted:#61736e;--line:#dce6e2;--red:#b43d3d;--amber:#8a5a00}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px system-ui,-apple-system,Segoe UI,sans-serif}
+header{background:var(--green);color:white;padding:24px 18px 22px;border-radius:0 0 22px 22px}
+header h1{margin:0;font-size:25px}header p{margin:6px 0 0;opacity:.9;font-size:14px}
+main{max-width:760px;margin:auto;padding:16px}
+.card{background:white;border:1px solid var(--line);border-radius:16px;padding:16px;margin:0 0 14px;box-shadow:0 3px 12px #173d3010}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}.row h2{font-size:17px;margin:0}
+.badge{font-size:12px;border-radius:999px;padding:5px 9px;background:#fff0d0;color:var(--amber);font-weight:650}
+.small{color:var(--muted);font-size:13px;line-height:1.45}
+.platforms{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:13px}
+.platform{border:1px solid var(--line);border-radius:12px;padding:11px 8px;text-align:center;font-size:13px}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#d69b2d;margin-right:5px}
+.monthbar{display:flex;justify-content:space-between;align-items:center;margin:14px 0}
+button,select,input{font:inherit}button{border:0;border-radius:11px;background:var(--green);color:white;padding:11px 13px;font-weight:650;cursor:pointer}
+button.secondary{background:#e7efec;color:var(--green)}button.danger{background:#fff0f0;color:var(--red)}
+#monthLabel{font-weight:750}
+.calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.weekday{text-align:center;font-size:11px;color:var(--muted);padding:5px 0}
+.day{min-height:44px;border:1px solid var(--line);border-radius:9px;background:white;color:var(--ink);padding:5px 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
+.day.empty{border:0;background:transparent}.day.booked{background:#fde7e5;border-color:#f2c3bd;color:#922e28}.day.blocked{background:#fff0d0;border-color:#f0d69a;color:#7b5100}.day .mark{font-size:9px;font-weight:700}
+label{display:block;font-size:13px;font-weight:650;margin:10px 0 5px}
+input,select{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px;background:white;color:var(--ink)}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.notice{border-left:4px solid #d69b2d;background:#fff8e8;padding:12px;border-radius:8px;font-size:13px;line-height:1.45}
+#events{padding-left:18px;margin-bottom:0}#events li{margin:7px 0;font-size:13px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:10px 0 28px}
+@media(max-width:420px){.day{min-height:39px}.platforms{gap:5px}.platform{padding:10px 4px}.formgrid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><h1>🏡 EvTakip</h1><p>Tek ev · Üç platform · Tek takvim</p></header>
+<main>
+  <section class="card">
+    <div class="row"><h2>Platform durumu</h2><span class="badge">Kurulum bekliyor</span></div>
+    <div class="platforms">
+      <div class="platform"><span class="dot"></span><b>Airbnb</b><div class="small">Bağlanmadı</div></div>
+      <div class="platform"><span class="dot"></span><b>Agoda</b><div class="small">Bağlanmadı</div></div>
+      <div class="platform"><span class="dot"></span><b>Vrbo</b><div class="small">Bağlanmadı</div></div>
+    </div>
+    <p class="small">Bu ilk sürüm, telefonda takvim ve manuel tarih takibi içindir. Platformlara gerçek bağlantı ve otomatik güncelleme henüz yapılandırılmadı.</p>
+  </section>
+
+  <section class="card">
+    <div class="row"><h2>Ortak takvim</h2><span class="small">Bir güne dokunarak durum değiştir</span></div>
+    <div class="monthbar"><button class="secondary" id="prev">‹</button><span id="monthLabel"></span><button class="secondary" id="next">›</button></div>
+    <div class="calendar" id="calendar"></div>
+    <div class="actions"><button class="secondary" id="clearMonth">Bu ayın manuel işaretlerini temizle</button></div>
+    <p class="small">Kırmızı: rezerve · Sarı: manuel kapalı · Boş: henüz işaretlenmemiş. Örnek işaretler yalnızca bu telefondaki tarayıcıda saklanır.</p>
+  </section>
+
+  <section class="card">
+    <h2 style="font-size:17px;margin-top:0">Tarih ekle / kapat</h2>
+    <div class="formgrid">
+      <div><label for="start">Giriş tarihi</label><input type="date" id="start"></div>
+      <div><label for="end">Çıkış tarihi</label><input type="date" id="end"></div>
+    </div>
+    <label for="kind">Durum</label>
+    <select id="kind"><option value="blocked">Kişisel kullanım / kapalı</option><option value="booked">Rezervasyon (yerel kayıt)</option></select>
+    <div class="actions"><button id="save">Tarihleri işaretle</button><button class="danger" id="remove">Seçili aralıktaki işaretleri kaldır</button></div>
+  </section>
+
+  <section class="card">
+    <h2 style="font-size:17px;margin-top:0">Son işlemler</h2>
+    <ul id="events"><li>Henüz işlem yok.</li></ul>
+    <div class="actions"><button class="secondary" id="export">Takvim kaydını yedekle (JSON)</button><button class="secondary" id="importBtn">Yedekten geri yükle</button><input id="importFile" type="file" accept=".json,application/json" hidden></div>
+  </section>
+
+  <div class="notice"><b>Önemli:</b> Bu prototip rezervasyonları Airbnb, Agoda veya Vrbo'dan henüz çekmez ve bu platformlarda tarih kapatmaz. Bunun için güvenli bir sunucu, takvim bağlantılarının sunucu tarafında okunması ve platformların izin verdiği güncelleme/API yöntemlerinin kurulması gerekir. iCal bağlantılarını uygulamanın içine herkese açık şekilde yapıştırmayın.</div>
+  <footer>EvTakip · İlk prototip · Veriler bu tarayıcıda saklanır</footer>
+</main>
+<script>
+const names=['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+let view=new Date(); view.setDate(1);
+let data=JSON.parse(localStorage.getItem('evtakip_days')||'{}');
+let logs=JSON.parse(localStorage.getItem('evtakip_logs')||'[]');
+const key=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+function log(s){logs.unshift(new Date().toLocaleString('tr-TR')+' — '+s);logs=logs.slice(0,8);localStorage.setItem('evtakip_logs',JSON.stringify(logs));renderLogs()}
+function renderLogs(){const ul=document.getElementById('events');ul.innerHTML='';(logs.length?logs:['Henüz işlem yok.']).forEach(x=>{let li=document.createElement('li');li.textContent=x;ul.appendChild(li)})}
+function render(){
+ document.getElementById('monthLabel').textContent=names[view.getMonth()]+' '+view.getFullYear();
+ const el=document.getElementById('calendar');el.innerHTML='';
+ ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'].forEach(w=>{let e=document.createElement('div');e.className='weekday';e.textContent=w;el.appendChild(e)});
+ let offset=(new Date(view.getFullYear(),view.getMonth(),1).getDay()+6)%7;
+ for(let i=0;i<offset;i++){let e=document.createElement('div');e.className='day empty';el.appendChild(e)}
+ let count=new Date(view.getFullYear(),view.getMonth()+1,0).getDate();
+ for(let n=1;n<=count;n++){let d=new Date(view.getFullYear(),view.getMonth(),n),k=key(d),v=data[k];let b=document.createElement('button');b.className='day'+(v?' '+v:'');b.innerHTML='<span>'+n+'</span>'+(v?'<span class="mark">'+(v==='booked'?'REZ.':'KAPALI')+'</span>':'');b.addEventListener('click',()=>{if(data[k])delete data[k];else data[k]='blocked';saveData();log(k+(data[k]?' kapatıldı':' işaret kaldırıldı'));render()});el.appendChild(b)}
+}
+function saveData(){localStorage.setItem('evtakip_days',JSON.stringify(data))}
+function range(action){let s=document.getElementById('start').value,e=document.getElementById('end').value,kind=document.getElementById('kind').value;if(!s||!e||e<=s){alert('Lütfen geçerli bir giriş ve çıkış tarihi seç. Çıkış tarihi girişten sonra olmalı.');return}let d=new Date(s+'T12:00:00'),last=new Date(e+'T12:00:00');while(d<last){let k=key(d);if(action==='remove')delete data[k];else data[k]=kind;d.setDate(d.getDate()+1)}saveData();log((action==='remove'?'İşaretler kaldırıldı: ':'Tarihler işaretlendi: ')+s+' – '+e);render()}
+document.getElementById('prev').onclick=()=>{view.setMonth(view.getMonth()-1);render()};
+document.getElementById('next').onclick=()=>{view.setMonth(view.getMonth()+1);render()};
+document.getElementById('save').onclick=()=>range('save');
+document.getElementById('remove').onclick=()=>range('remove');
+document.getElementById('clearMonth').onclick=()=>{if(confirm('Bu ayın tüm manuel işaretleri silinsin mi?')){Object.keys(data).forEach(k=>{if(k.startsWith(view.getFullYear()+'-'+String(view.getMonth()+1).padStart(2,'0')+'-'))delete data[k]});saveData();log('Ay işaretleri temizlendi');render()}};
+document.getElementById('export').onclick=()=>{const blob=new Blob([JSON.stringify({days:data,logs},null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='evtakip-yedek.json';a.click();URL.revokeObjectURL(a.href)};
+document.getElementById('importBtn').onclick=()=>document.getElementById('importFile').click();
+document.getElementById('importFile').onchange=async ev=>{try{const obj=JSON.parse(await ev.target.files[0].text());if(!obj.days)throw Error();data=obj.days;logs=obj.logs||[];saveData();localStorage.setItem('evtakip_logs',JSON.stringify(logs));render();renderLogs();log('Yedek geri yüklendi')}catch(e){alert('Bu yedek dosyası okunamadı.')}};
+render();renderLogs();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body></html>
